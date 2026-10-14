@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0c4b38">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="競馬予想ナビ">
+<link rel="manifest" href="manifest.webmanifest">
+<title>競馬予想ナビ</title>
+<style>
+:root{--green:#0c4b38;--green2:#147653;--bg:#f2f6f3;--ink:#14251e;--muted:#6a7b72;--line:#dce6df;--gold:#f3c96b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif}
+header{padding:calc(15px + env(safe-area-inset-top)) 18px 16px;background:linear-gradient(120deg,var(--green),var(--green2));color:#fff;position:sticky;top:0;z-index:5}
+.brand{font-size:22px;font-weight:850;letter-spacing:.02em}.subtitle{font-size:12px;opacity:.85;margin-top:3px}
+main{max-width:780px;margin:auto;padding:14px 12px 92px}.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:15px;margin-bottom:13px;box-shadow:0 3px 12px #133b2908}
+h2{font-size:17px;margin:0 0 12px}.small{font-size:12px;line-height:1.6;color:var(--muted)}
+.row{display:flex;gap:9px}.row>*{flex:1;min-width:0}
+label{display:block;font-size:12px;color:var(--muted);margin:0 0 5px}input,select{width:100%;border:1px solid #ccd9d0;border-radius:9px;padding:10px;background:#fff;font:inherit;font-size:14px;color:var(--ink)}
+button{border:0;border-radius:10px;padding:11px 13px;font:inherit;font-weight:750;cursor:pointer}.primary{background:var(--green2);color:#fff}.soft{background:#e8f1eb;color:var(--green)}.outline{background:white;border:1px solid var(--line);color:var(--ink)}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.btnrow button{flex:1}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:13px}.tab{background:#e5eee8;color:#486458;padding:10px 3px;font-size:12px}.tab.active{background:var(--green);color:#fff}
+.page{display:none}.page.active{display:block}
+.race{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}.race:last-child{border:0}.badge{background:#e8f3ec;color:var(--green);font-size:11px;font-weight:800;border-radius:7px;padding:5px 7px;white-space:nowrap}.racetitle{font-weight:800}.raceinfo{font-size:12px;color:var(--muted);margin-top:3px}.arrow{margin-left:auto;color:var(--muted)}
+.horse{border:1px solid var(--line);border-radius:12px;padding:12px;margin:9px 0}.horsehead{display:flex;gap:8px;align-items:center}.horseNo{min-width:28px;height:28px;border-radius:7px;background:#edf2ee;display:grid;place-items:center;font-weight:800}.horseName{font-weight:800;flex:1}.odds{font-weight:800;color:#b83c31}.ratings{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px}.ratings label{font-size:10px}.ratings input{padding:8px}
+.scorebar{height:7px;background:#e7eee9;border-radius:20px;overflow:hidden;margin-top:6px}.scorebar span{display:block;height:100%;background:var(--green2)}
+.pick{display:flex;gap:10px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line)}.pick:last-child{border:0}.mark{font-size:23px;font-weight:900;width:30px}.pickname{font-weight:800;flex:1}.score{font-size:12px;color:var(--muted);text-align:right}
+.statgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.stat{background:#f4f8f5;border-radius:11px;padding:12px}.stat span{font-size:12px;color:var(--muted)}.stat strong{display:block;font-size:22px;margin-top:4px}
+.notice{padding:11px;border-radius:10px;background:#fff7df;border:1px solid #efdfa9;font-size:12px;line-height:1.6;color:#574b25}
+nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);padding:7px 5px calc(7px + env(safe-area-inset-bottom));z-index:10}
+nav button{background:transparent;color:#75847c;padding:5px 2px;font-size:11px}nav button b{display:block;font-size:19px;margin-bottom:2px}nav button.active{color:var(--green)}
+@media(min-width:650px){main{padding-top:20px}.ratings{grid-template-columns:repeat(6,1fr)}}
+</style>
+</head>
+<body>
+<header><div class="brand">♞ 競馬予想ナビ</div><div class="subtitle">データ × AIで、予想をもっとスマートに。</div></header>
+<main>
+<div class="tabs" aria-label="画面選択">
+<button class="tab active" data-page="home">ホーム</button><button class="tab" data-page="races">出走馬</button><button class="tab" data-page="predict">AI予想</button><button class="tab" data-page="stats">回収率</button>
+</div>
+<section class="page active" id="home">
+<div class="card"><h2>レースを設定</h2><div class="row">
+<div><label>開催日</label><input id="raceDate" type="date"></div>
+<div><label>競馬場</label><select id="track"><option>東京</option><option>中山</option><option>阪神</option><option>京都</option><option>中京</option><option>札幌</option><option>函館</option><option>福島</option><option>新潟</option><option>小倉</option></select></div>
+<div><label>レース</label><select id="raceNo"></select></div>
+</div><div class="btnrow"><button class="primary" onclick="showPage('races')">出走馬を入力する</button><button class="soft" onclick="loadDemo()">サンプルデータ</button></div></div>
+<div class="card"><h2>予想の流れ</h2>
+<div class="race"><span class="badge">01</span><div><div class="racetitle">出走馬・オッズを登録</div><div class="raceinfo">手入力、またはCSVインポート</div></div></div>
+<div class="race"><span class="badge">02</span><div><div class="racetitle">各馬の特徴を評価</div><div class="raceinfo">近走・コース・騎手・展開・馬場・状態</div></div></div>
+<div class="race"><span class="badge">03</span><div><div class="racetitle">予想結果を比較</div><div class="raceinfo">印・評価スコア・結果・収支を記録</div></div></div></div>
+<div class="notice">この試作版は評価スコアと記録機能の土台です。リアルタイム出馬表・オッズ取得や学習済みAIモデルは、データ提供元との接続後に実装します。</div>
+</section>
+<section class="page" id="races">
+<div class="card"><h2>出走馬・オッズ</h2><p class="small">オッズと各評価を入力してください。評価は1〜5。データはこの端末のブラウザ内に保存されます。</p><div id="horses"></div>
+<div class="btnrow"><button class="soft" onclick="addHorse()">＋ 馬を追加</button><button class="outline" onclick="document.getElementById('csv').click()">CSV読込</button><input id="csv" type="file" accept=".csv" hidden onchange="importCSV(event)"></div>
+<div class="btnrow"><button class="primary" onclick="calculate()">予想スコアを計算</button><button class="outline" onclick="saveData()">保存</button></div></div>
+<div class="card"><h2>CSV形式</h2><p class="small">列順：馬番,馬名,単勝オッズ,近走,コース,騎手,展開,馬場,状態。1行目は見出しでも構いません。</p></div>
+</section>
+<section class="page" id="predict">
+<div class="card"><h2>予想結果</h2><div id="prediction"><p class="small">出走馬を登録し、「予想スコアを計算」を押してください。</p></div>
+<div class="btnrow"><button class="primary" onclick="savePrediction()">この予想を履歴に保存</button><button class="outline" onclick="exportPrediction()">CSV保存</button></div></div>
+<div class="notice">評価スコアは入力値に基づく比較指標で、実際の勝率や的中率を保証しません。馬券購入は無理のない範囲で。</div>
+</section>
+<section class="page" id="stats">
+<div class="card"><h2>収支・予想履歴</h2><div class="statgrid">
+<div class="stat"><span>購入金額（登録分）</span><strong id="spent">¥0</strong></div>
+<div class="stat"><span>払戻金（登録分）</span><strong id="returned">¥0</strong></div>
+<div class="stat"><span>収支</span><strong id="profit">¥0</strong></div>
+<div class="stat"><span>回収率</span><strong id="roi">—</strong></div></div>
+<div style="margin-top:15px" class="row"><div><label>購入金額（円）</label><input id="stake" type="number" min="0" value="0"></div><div><label>払戻金（円）</label><input id="payout" type="number" min="0" value="0"></div></div>
+<div class="btnrow"><button class="primary" onclick="addSettlement()">収支に記録</button><button class="outline" onclick="exportHistory()">履歴CSV保存</button></div>
+<div id="history" class="small" style="margin-top:12px"></div></div>
+<div class="card"><h2>本格AI化について</h2><p class="small">過去成績から勝率を学習するには、信頼できるレースデータ、特徴量の整備、時系列での検証が必要です。実際のAI予測を搭載する前に、データ取得元と利用条件を確定します。</p></div>
+</section>
+</main>
+<nav><button class="active" data-page="home"><b>⌂</b>ホーム</button><button data-page="races"><b>♞</b>出走馬</button><button data-page="predict"><b>◎</b>AI予想</button><button data-page="stats"><b>▥</b>回収率</button></nav>
+<script>
+const $=id=>document.getElementById(id);
+for(let i=1;i<=12;i++) $('raceNo').add(new Option(i+'R',i+'R',false,i===11));
+$('raceDate').value=new Date().toLocaleDateString('sv-SE');
+let horses=[],lastPrediction=[],history=JSON.parse(localStorage.getItem('keibaHistory')||'[]'),settlements=JSON.parse(localStorage.getItem('keibaSettlements')||'[]');
+function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===id));if(id==='stats')renderStats();window.scrollTo({top:0,behavior:'smooth'})}
+document.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
+function blankHorse(n){return {num:n,name:'',odds:'',form:3,course:3,jockey:3,pace:3,going:3,condition:3}}
+function addHorse(h){horses.push(h||blankHorse(horses.length+1));renderHorses()}
+function renderHorses(){const box=$('horses');box.innerHTML='';horses.forEach((h,i)=>{const d=document.createElement('div');d.className='horse';d.innerHTML=`<div class="horsehead"><div class="horseNo">${i+1}</div><div style="flex:1"><label>馬名</label><input data-k="name" value="${esc(h.name)}" placeholder="馬名を入力"></div><div style="width:82px"><label>馬番</label><input data-k="num" type="number" value="${h.num}"></div><div style="width:95px"><label>単勝オッズ</label><input data-k="odds" type="number" min="0" step=".1" value="${h.odds}" placeholder="例 4.5"></div></div><div class="ratings">${[['form','近走'],['course','コース'],['jockey','騎手'],['pace','展開'],['going','馬場'],['condition','状態']].map(([k,t])=>`<div><label>${t}（1〜5）</label><select data-k="${k}">${[1,2,3,4,5].map(v=>`<option ${Number(h[k])===v?'selected':''}>${v}</option>`).join('')}</select></div>`).join('')}</div><div style="text-align:right;margin-top:8px"><button class="outline" data-remove="${i}" style="padding:6px 10px;font-size:12px">この馬を削除</button></div>`;d.querySelectorAll('[data-k]').forEach(inp=>inp.addEventListener('change',()=>{const k=inp.dataset.k;horses[i][k]=k==='name'?inp.value:k==='odds'?inp.value:Number(inp.value)}));d.querySelector('[data-remove]').onclick=()=>{horses.splice(i,1);renderHorses()};box.appendChild(d)})}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function loadDemo(){horses=[
+{num:1,name:'サンプルホースA',odds:3.8,form:5,course:4,jockey:4,pace:4,going:4,condition:4},
+{num:2,name:'サンプルホースB',odds:6.2,form:4,course:5,jockey:4,pace:3,going:4,condition:4},
+{num:3,name:'サンプルホースC',odds:12.5,form:3,course:4,jockey:3,pace:5,going:3,condition:4},
+{num:4,name:'サンプルホースD',odds:2.9,form:4,course:3,jockey:5,pace:3,going:4,condition:3},
+{num:5,name:'サンプルホースE',odds:24,form:2,course:3,jockey:3,pace:4,going:3,condition:3}];renderHorses();showPage('races')}
+function calculate(){horses=[...document.querySelectorAll('#horses .horse')].map((d,i)=>{const h={};d.querySelectorAll('[data-k]').forEach(x=>h[x.dataset.k]=x.dataset.k==='name'?x.value:x.dataset.k==='odds'?Number(x.value):Number(x.value));return h}).filter(h=>h.name);if(!horses.length||horses.some(h=>!h.odds||h.odds<=0)){alert('馬名と単勝オッズを入力してください。');return}
+const w={form:.26,course:.18,jockey:.14,pace:.14,going:.12,condition:.16};lastPrediction=horses.map(h=>({...h,score:Object.keys(w).reduce((s,k)=>s+Math.max(1,Math.min(5,h[k]||3))/5*w[k],0)*100})).sort((a,b)=>b.score-a.score);renderPrediction();showPage('predict')}
+function renderPrediction(){if(!lastPrediction.length)return;const marks=['◎','○','▲','△','☆'];$('prediction').innerHTML=lastPrediction.map((h,i)=>`<div class="pick"><div class="mark">${marks[i]||'—'}</div><div class="pickname">${h.num}番 ${esc(h.name)}<div class="score">${h.odds}倍</div><div class="score">評価 ${h.score.toFixed(1)} / 100</div><div class="scorebar"><span style="width:${h.score}%"></span></div></div><div class="score">${(h.score/100*h.odds).toFixed(2)}<br>簡易妙味指標</div></div>`).join('')}
+function saveData(){localStorage.setItem('keibaHorses',JSON.stringify(horses));alert('この端末のブラウザに保存しました。')}
+function savePrediction(){if(!lastPrediction.length){alert('先に予想を計算してください');return}history.unshift({date:$('raceDate').value,track:$('track').value,race:$('raceNo').value,rows:lastPrediction});localStorage.setItem('keibaHistory',JSON.stringify(history));alert('予想履歴に保存しました。')}
+function importCSV(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{horses=[];r.result.split(/\r?\n/).filter(Boolean).forEach((line,i)=>{if(i===0&&line.includes('馬番'))return;const a=line.split(',').map(s=>s.trim().replace(/^"|"$/g,''));if(a.length>=9)horses.push({num:+a[0],name:a[1],odds:+a[2],form:+a[3],course:+a[4],jockey:+a[5],pace:+a[6],going:+a[7],condition:+a[8]})});renderHorses();e.target.value='';showPage('races')};r.readAsText(f,'UTF-8')}
+function csvDownload(name,rows){const csv='\uFEFF'+rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+function exportPrediction(){if(!lastPrediction.length)return;csvDownload('競馬予想.csv',[['印','順位','馬番','馬名','単勝オッズ','評価スコア'],...lastPrediction.map((h,i)=>[['◎','○','▲','△','☆'][i]||'—',i+1,h.num,h.name,h.odds,h.score.toFixed(1)])])}
+function addSettlement(){const stake=Math.max(0,Number($('stake').value)),payout=Math.max(0,Number($('payout').value));settlements.unshift({date:new Date().toLocaleDateString('sv-SE'),stake,payout});localStorage.setItem('keibaSettlements',JSON.stringify(settlements));renderStats()}
+function renderStats(){const spent=settlements.reduce((s,x)=>s+x.stake,0),paid=settlements.reduce((s,x)=>s+x.payout,0);$('spent').textContent='¥'+spent.toLocaleString();$('returned').textContent='¥'+paid.toLocaleString();$('profit').textContent=(paid-spent<0?'-¥'+(spent-paid).toLocaleString():'¥'+(paid-spent).toLocaleString());$('roi').textContent=spent?(paid/spent*100).toFixed(1)+'%':'—';$('history').innerHTML=history.length?'<b>予想履歴</b><br>'+history.slice(0,8).map(x=>`${esc(x.date)} ${esc(x.track)} ${esc(x.race)}：${x.rows.slice(0,3).map((h,i)=>`${['◎','○','▲'][i]} ${esc(h.name)}`).join(' / ')}`).join('<br>'):'予想履歴はまだありません。'}
+function exportHistory(){csvDownload('競馬収支履歴.csv',[['日付','購入金額','払戻金','収支'],...settlements.map(x=>[x.date,x.stake,x.payout,x.payout-x.stake])])}
+const saved=JSON.parse(localStorage.getItem('keibaHorses')||'null');if(saved?.length){horses=saved;renderHorses()}else{for(let i=1;i<=8;i++)horses.push(blankHorse(i));renderHorses()}
+if('serviceWorker' in navigator && location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});
+</script>
+</body></html>
