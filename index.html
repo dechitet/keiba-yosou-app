@@ -98,8 +98,24 @@ const w={form:.26,course:.18,jockey:.14,pace:.14,going:.12,condition:.16};
 const scored=horses.map(h=>({...h,score:Object.keys(w).reduce((s,k)=>s+(Math.max(1,Math.min(5,Number(h[k])||3))-1)/4*w[k],0)*100}));
 const temp=10;const exp=scored.map(h=>Math.exp((h.score-50)/temp));const total=exp.reduce((a,b)=>a+b,0)||1;
 lastPrediction=scored.map((h,i)=>({...h,prob:exp[i]/total*100,marketProb:100/Number(h.odds),ev:(exp[i]/total)*Number(h.odds),edge:(exp[i]/total*Number(h.odds)-1)*100})).sort((a,b)=>b.prob-a.prob);renderPrediction();showPage('predict')}
-function renderPrediction(){if(!lastPrediction.length)return;const marks=['◎','○','▲','△','☆'];const top=lastPrediction.filter(h=>h.ev>=1);const best=top.length?`<div class="notice" style="margin-bottom:10px"><b>期待値チェック：</b>入力評価ベースで期待値指標が1.00以上の馬は ${top.map(h=>esc(h.name)).join('、')}。これは試作モデル上の候補で、実際の優位性を示すものではありません。</div>`:`<div class="notice" style="margin-bottom:10px">今回、試作モデル上で期待値指標1.00以上の馬はいません。無理に買い目を作らず「見送り」も選択肢です。</div>`;
-$('prediction').innerHTML=best+`<div class="small" style="margin-bottom:8px">推定確率は登録馬の中で合計100%になる相対値です。データで学習・検証した実勝率ではありません。</div>`+lastPrediction.map((h,i)=>`<div class="pick"><div class="mark">${marks[i]||'—'}</div><div class="pickname">${h.num}番 ${esc(h.name)}<div class="score">単勝 ${h.odds}倍 ・ 評価 ${h.score.toFixed(1)}/100</div><div class="score">相対推定確率 ${h.prob.toFixed(1)}% ／ オッズ逆算値 ${h.marketProb.toFixed(1)}%</div><div class="scorebar"><span style="width:${Math.max(0,Math.min(100,h.prob))}%"></span></div></div><div class="score">期待値指標<br><b>${h.ev.toFixed(2)}</b><br><span>${h.edge>=0?'+':''}${h.edge.toFixed(1)}%</span></div></div>`).join('')}
+function renderPrediction(){
+if(!lastPrediction.length)return;
+
+const marks=['◎','○','▲','△','☆'];
+const labels=['本命','対抗','単穴','連下','穴馬'];
+
+const top=lastPrediction.filter(h=>h.ev>=1);
+
+const best=top.length
+? `<div class="notice" style="margin-bottom:10px"><b>期待値チェック：</b>期待値指標1.00以上の馬は ${top.map(h=>esc(h.name)).join('、')}。実際の優位性を保証するものではありません。</div>`
+: `<div class="notice" style="margin-bottom:10px">期待値指標1.00以上の馬はいません。今回は見送りも選択肢です。</div>`;
+
+$('prediction').innerHTML=best+
+`<div class="small" style="margin-bottom:8px">確率は登録馬内の相対値です。実際の勝率ではありません。</div>`+
+lastPrediction.map((h,i)=>`     <div class="pick">       <div class="mark">${marks[i]||'—'}</div>       <div class="pickname">
+        ${labels[i]||'その他'}：${h.num}番 ${esc(h.name)}         <div class="score">単勝 ${h.odds}倍 ・ 評価 ${h.score.toFixed(1)}/100</div>         <div class="score">相対推定確率 ${h.prob.toFixed(1)}% ／ オッズ逆算値 ${h.marketProb.toFixed(1)}%</div>         <div class="scorebar"><span style="width:${Math.max(0,Math.min(100,h.prob))}%"></span></div>       </div>       <div class="score">期待値指標<br><b>${h.ev.toFixed(2)}</b><br><span>${h.edge>=0?'+':''}${h.edge.toFixed(1)}%</span></div>     </div>
+  `).join('');
+}
 
 function saveData(){localStorage.setItem('keibaHorses',JSON.stringify(horses));alert('この端末のブラウザに保存しました。')}
 function savePrediction(){if(!lastPrediction.length){alert('先に予想を計算してください');return}history.unshift({date:$('raceDate').value,track:$('track').value,race:$('raceNo').value,rows:lastPrediction});localStorage.setItem('keibaHistory',JSON.stringify(history));alert('予想履歴に保存しました。')}
