@@ -60,6 +60,24 @@ nav button{background:transparent;color:#75847c;padding:5px 2px;font-size:11px}n
 <section class="page" id="predict">
 <div class="card"><h2>予想結果</h2><div id="prediction"><p class="small">出走馬を登録し、「予想スコアを計算」を押してください。</p></div>
 <div class="btnrow"><button class="primary" onclick="savePrediction()">この予想を履歴に保存</button><button class="outline" onclick="exportPrediction()">CSV保存</button></div></div>
+<div class="card">
+<h2>馬券の買い目提案</h2>
+<p class="small">予想順位をもとに買い目候補を作成します。組み合わせオッズや的中確率は取得していないため、払戻期待値の計算は行いません。</p>
+<div class="row">
+  <div><label>馬券の種類</label>
+    <select id="betType">
+      <option value="win">単勝</option>
+      <option value="wide">ワイド</option>
+      <option value="quinella">馬連</option>
+      <option value="trio">三連複</option>
+      <option value="trifecta">三連単</option>
+    </select>
+  </div>
+  <div><label>予算（円）</label><input id="betBudget" type="number" min="100" step="100" value="1000"></div>
+</div>
+<div class="btnrow"><button class="primary" onclick="suggestBets()">買い目を提案する</button></div>
+<div id="betSuggestions" style="margin-top:12px"></div>
+</div>
 <div class="notice">予測確率は入力した評価を相対比較する試作モデルによる推定値で、実測データで学習したAIの勝率ではありません。期待値が1を超えても利益は保証されません。馬券購入は無理のない範囲で。</div>
 </section>
 <section class="page" id="stats">
@@ -115,6 +133,57 @@ $('prediction').innerHTML=best+
 lastPrediction.map((h,i)=>`     <div class="pick">       <div class="mark">${marks[i]||'—'}</div>       <div class="pickname">
         ${labels[i]||'その他'}：${h.num}番 ${esc(h.name)}         <div class="score">単勝 ${h.odds}倍 ・ 評価 ${h.score.toFixed(1)}/100</div>         <div class="score">相対推定確率 ${h.prob.toFixed(1)}% ／ オッズ逆算値 ${h.marketProb.toFixed(1)}%</div>         <div class="scorebar"><span style="width:${Math.max(0,Math.min(100,h.prob))}%"></span></div>       </div>       <div class="score">期待値指標<br><b>${h.ev.toFixed(2)}</b><br><span>${h.edge>=0?'+':''}${h.edge.toFixed(1)}%</span></div>     </div>
   `).join('');
+}
+
+
+function suggestBets(){
+  const box=$('betSuggestions');
+  if(!lastPrediction.length){
+    box.innerHTML='<p class="small">先に出走馬を登録して予想を計算してください。</p>';
+    return;
+  }
+  const budget=Math.floor(Number($('betBudget').value)/100)*100;
+  if(!Number.isFinite(budget)||budget<100){
+    alert('予算は100円以上で入力してください。');
+    return;
+  }
+  const type=$('betType').value;
+  const ranked=[...lastPrediction].sort((a,b)=>b.prob-a.prob);
+  const top=ranked.slice(0, type==='trio'?4:type==='trifecta'?3:type==='win'?1:4);
+  const fmt=arr=>arr.map(h=>`${h.num}番 ${esc(h.name)}`).join(' − ');
+  let tickets=[];
+  let title='';
+  if(type==='win'){
+    title='単勝';
+    tickets=[[top[0]]];
+  }else if(type==='wide'||type==='quinella'){
+    title=type==='wide'?'ワイド':'馬連';
+    for(let i=0;i<top.length;i++) for(let j=i+1;j<top.length;j++) tickets.push([top[i],top[j]]);
+  }else if(type==='trio'){
+    title='三連複';
+    for(let i=0;i<top.length;i++) for(let j=i+1;j<top.length;j++) for(let k=j+1;k<top.length;k++) tickets.push([top[i],top[j],top[k]]);
+  }else if(type==='trifecta'){
+    title='三連単';
+    for(let i=0;i<top.length;i++) for(let j=0;j<top.length;j++) for(let k=0;k<top.length;k++){
+      if(i!==j&&i!==k&&j!==k) tickets.push([top[i],top[j],top[k]]);
+    }
+  }
+  if(!tickets.length){
+    box.innerHTML='<p class="small">この馬券を提案するには、出走馬が不足しています。</p>';
+    return;
+  }
+  const units=Math.floor(budget/100);
+  if(units<tickets.length){
+    box.innerHTML=`<p class="small">この買い目候補は${tickets.length}点です。各100円で購入する場合、最低${(tickets.length*100).toLocaleString()}円が必要です。予算を増やすか、別の馬券を選んでください。</p>`;
+    return;
+  }
+  const base=Math.floor(units/tickets.length);
+  const remainder=units%tickets.length;
+  const amounts=tickets.map((_,i)=>(base+(i<remainder?1:0))*100);
+  const total=amounts.reduce((a,b)=>a+b,0);
+  box.innerHTML=`<div class="notice" style="margin-bottom:10px"><b>${title}・${tickets.length}点</b><br>予算 ${budget.toLocaleString()}円のうち、${total.toLocaleString()}円を均等に近い形で配分します。余りの100円単位は先頭の候補から配分しています。</div>`+
+    tickets.map((t,i)=>`<div class="pick"><div class="pickname">${i+1}. ${fmt(t)}</div><div class="score"><b>${amounts[i].toLocaleString()}円</b></div></div>`).join('')+
+    `<p class="small" style="margin-top:10px">これは予想順位に基づく買い目候補です。的中や利益を保証するものではありません。購入する場合は内容と金額を確認してください。</p>`;
 }
 
 function saveData(){localStorage.setItem('keibaHorses',JSON.stringify(horses));alert('この端末のブラウザに保存しました。')}
