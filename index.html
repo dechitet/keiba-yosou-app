@@ -63,6 +63,14 @@ nav button{background:transparent;color:#75847c;padding:5px 2px;font-size:11px}n
 <div class="card">
 <h2>馬券の買い目提案</h2>
 <p class="small">予想順位をもとに買い目候補を作成します。組み合わせオッズや的中確率は取得していないため、払戻期待値の計算は行いません。</p>
+<div style="margin:12px 0"><label>予想モード</label>
+  <select id="betMode" onchange="updateBetMode()">
+    <option value="stable">安定型</option>
+    <option value="high">高配当型</option>
+    <option value="auto" selected>おまかせAI型</option>
+  </select>
+  <p id="betModeDescription" class="small" style="margin:6px 0 0">出走馬の評価バランスを見て、安定型・高配当型を簡易的に切り替えます。</p>
+</div>
 <div class="row">
   <div><label>馬券の種類</label>
     <select id="betType">
@@ -136,6 +144,23 @@ lastPrediction.map((h,i)=>`     <div class="pick">       <div class="mark">${mar
 }
 
 
+function updateBetMode(){
+  const mode=$('betMode').value;
+  if(mode==='stable'){
+    $('betType').value='wide';
+    $('betModeDescription').textContent='安定型：上位評価馬を中心に、ワイドで堅実さを重視する買い方です。';
+  }else if(mode==='high'){
+    $('betType').value='trio';
+    $('betModeDescription').textContent='高配当型：上位馬を広めに組み合わせ、三連複で配当妙味を狙う買い方です。';
+  }else{
+    const ranked=[...lastPrediction].sort((a,b)=>b.prob-a.prob);
+    const gap=ranked.length>1?ranked[0].prob-ranked[1].prob:100;
+    const high=ranked.length>=4 && gap<8;
+    $('betType').value=high?'trio':'wide';
+    $('betModeDescription').textContent=high?'おまかせAI型：上位馬の評価差が小さいため、高配当型（三連複）を選択しました。':'おまかせAI型：上位馬の評価差などを参考に、安定型（ワイド）を選択しました。';
+  }
+}
+
 function suggestBets(){
   const box=$('betSuggestions');
   if(!lastPrediction.length){
@@ -147,9 +172,12 @@ function suggestBets(){
     alert('予算は100円以上で入力してください。');
     return;
   }
+  const mode=$('betMode').value;
+  if(mode==='auto') updateBetMode();
   const type=$('betType').value;
   const ranked=[...lastPrediction].sort((a,b)=>b.prob-a.prob);
-  const top=ranked.slice(0, type==='trio'?4:type==='trifecta'?3:type==='win'?1:4);
+  const count=mode==='stable'?3:mode==='high'?4:(type==='trio'?4:3);
+  const top=ranked.slice(0, type==='trifecta'?3:type==='win'?1:count);
   const fmt=arr=>arr.map(h=>`${h.num}番 ${esc(h.name)}`).join(' − ');
   let tickets=[];
   let title='';
@@ -195,6 +223,7 @@ function addSettlement(){const stake=Math.max(0,Number($('stake').value)),payout
 function renderStats(){const spent=settlements.reduce((s,x)=>s+x.stake,0),paid=settlements.reduce((s,x)=>s+x.payout,0);$('spent').textContent='¥'+spent.toLocaleString();$('returned').textContent='¥'+paid.toLocaleString();$('profit').textContent=(paid-spent<0?'-¥'+(spent-paid).toLocaleString():'¥'+(paid-spent).toLocaleString());$('roi').textContent=spent?(paid/spent*100).toFixed(1)+'%':'—';$('history').innerHTML=history.length?'<b>予想履歴</b><br>'+history.slice(0,8).map(x=>`${esc(x.date)} ${esc(x.track)} ${esc(x.race)}：${x.rows.slice(0,3).map((h,i)=>`${['◎','○','▲'][i]} ${esc(h.name)}`).join(' / ')}`).join('<br>'):'予想履歴はまだありません。'}
 function exportHistory(){csvDownload('競馬収支履歴.csv',[['日付','購入金額','払戻金','収支'],...settlements.map(x=>[x.date,x.stake,x.payout,x.payout-x.stake])])}
 const saved=JSON.parse(localStorage.getItem('keibaHorses')||'null');if(saved?.length){horses=saved;renderHorses()}else{for(let i=1;i<=8;i++)horses.push(blankHorse(i));renderHorses()}
+updateBetMode();
 if('serviceWorker' in navigator && location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});
 </script>
 </body></html>
